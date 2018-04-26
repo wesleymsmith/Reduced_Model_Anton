@@ -186,23 +186,97 @@ proc check_mol_collision_sphere_box {{sphere_sel} {box_sel} {sphere_pad 0} {box_
  check_collision_sphere_box $sphere_center $sphere_radius $box_minmax
 }
 
+proc get_sel_diag_sphere_r {{sel}} {
+	set sphere_inner_minmax [measure minmax $sel]
+	set sphere_center [measure center $sel]
+	set sphere_diag_vec [vecsub [lindex $sphere_inner_minmax 1] [lindex $sphere_inner_minmax 0]]
+	set sphere_radius [expr [veclength $sphere_diag_vec] / 2]
+	return $sphere_radius
+}
 #check for collision between two selections treating both
 #selections as bounding spheres
 proc check_mol_collision_sphere_sphere {{sphere_sel0} {sphere_sel1} {sphere_pad0 0} {sphere_pad1 0}} {
- set sphere_inner_minmax0 [measure minmax $sphere_sel0]
  set sphere_center0 [measure center $sphere_sel0]
+ set sphere_radius0 [expr get_sel_diag_sphere_r + $sphere_pad0]
 
- set sphere_diag_vec0 [vecsub [lindex $sphere_inner_minmax0 1] [lindex $sphere_inner_minmax0 0]]
- set sphere_radius0 [expr [veclength $sphere_diag_vec0] / 2 + $sphere_pad0]
- 
- set sphere_inner_minmax1 [measure minmax $sphere_sel1]
  set sphere_center1 [measure center $sphere_sel1]
- 
- set sphere_diag_vec1 [vecsub [lindex $sphere_inner_minmax1 1] [lindex $sphere_inner_minmax1 0]]
- set sphere_radius1 [expr [veclength $sphere_diag_vec1] / 2 + $sphere_pad1]
-
+ set sphere_radius1 [expr get_sel_diag_sphere_r + $sphere_pad1]
  
  check_collision_sphere_sphere $sphere_center0 $sphere_radius0 $sphere_center1 $sphere_radius1
+}
+
+#calculates the minimum 'signed' distance between atoms in a selection
+#and a given sphere. Distance is positive for atoms outside the sphere
+#and negative for atoms inside
+proc get_sel_to_sphere_min_signed_dist {{sel} {sphere_c {0 0 0}} {sphere_r 1.0} {guess 100}} {
+	set sel_coords [$sel get "x y z"]
+	set minDist $guess
+	foreach sel_crd $sel_coords {
+		set minDist [expr min($minDist,[expr [veclength [vecsub $sel_crd $sphere_c]] - $sphere_r])]
+	}
+	
+	return $minDist
+}
+proc check_mol_collision_sphere_sel {{sphere_sel} {sel} {distCut 0}} {
+	set sphere_c [measure center $sphere_sel]
+	set sphere_r [get_sel_diag_sphere_r $sphere_sel]
+
+	set minDist [get_sel_to_sphere_min_signed_dist $sel $sphere_c $sphere_r [expr $distCut * 100]]
+
+	set collided [expr $minDist < $distCut]
+	return $collided
+}
+
+#this is an N x M process eg time scales as the product of the atoms in
+#sel0 (M) times the atoms in sel1 (N). This can become very slow for
+#large selections so use with caution
+proc check_mol_collision_sel_dist {{sel0} {sel1} {distCut .5}} {
+	set minDist [get_sel_sel_minDist $sel0 $sel1 [expr $distCut * 100]]
+	set collided [expr $minDist < $distCut]
+	return $collided
+}
+proc get_sel_sel_minDist {{sel0} {sel1} {guess 1000}} {
+	set sel0_coords [$sel0 get "x y z"]
+	set sel1_coords [$sel1 get "x y z"]
+	set minDist [expr $distCut * 100] 
+	foreach sel0_crd $sel0_coords {
+		foreach sel1_crd $sel1_coords {
+			set minDist [expr min($minDist,[veclength [vecsub $sel0_crd $sel1_crd]])]
+		}
+	}
+	return $minDist
+}
+
+#find the radius of the smallest sphere which contains all atoms in an atom selection
+proc get_sel_minSphere_r {sel} {
+	set sel_len [llength [$sel get index]]
+	set sel_center [measure center $sel]
+	set sel_coords [$sel get "x y z"]
+	set maxDist 0
+	foreach selCrd $sel_coords {
+		set maxDist [expr max($maxDist,[veclength [vecsub $sel_center $selCrd]])]
+	}
+	return $maxDist
+}
+
+proc check_mol_collision_minSphere_minSphere {{sel0} {sel1} {pad0 0} {pad1 0}} {
+	set sel0_r [expr [get_sel_minSphere_r $sel0] + $pad0]
+	set sel0_c [measure center $sel0]
+
+	set sel1_r [expr [get_sel_minSphere_r $sel1] + $pad1]
+	set sel1_c [measure center $sel1]
+
+	check_collision_sphere_sphere $sel0_c $sel0_r $sel1_c $sel1_r
+}
+
+proc check_mol_collision_minSphere_sel {{sphere_sel} {sel} {distCut 0}} {
+	set sphere_c [measure center $sphere_sel]
+	set sphere_r [get_sel_minSphere_r $sphere_sel]
+
+	set minDist [get_sel_to_sphere_min_signed_dist $sel $sphere_c $sphere_r [expr $distCut * 100]]
+
+	set collided [expr $minDist < $distCut]
+	return $collided
 }
 
 proc padded_sel_bounds {{sel} {pad_all 0} {pad_vec {0 0 0}} {pad_bvec {{0 0 0} {0 0 0}}}} {
@@ -232,7 +306,18 @@ proc rand_point_in_box {bounding_minmax} {
  set delta_vec "[expr rand() * $x_range] [expr rand() * $y_range] [expr rand() * $z_range]"
 
  return [vecadd $min_vec $delta_vec] 
- 
+}
+
+proc rand_point_in_sphere {{c {0.0 0.0 0.0}} {r 1.0}} {
+ set PI 3.14159265358979323846
+ set rand_r "[expr rand() * $r]"
+ set rand_theta "[expr rand() * 2 * $PI]"
+ set rand_phi "[expr rand() * $PI]"
+ set z_crd "[expr $rand_r * cos($rand_phi)]"
+ set y_crd "[expr $rand_r * sin($rand_phi) * sin($rand_theta)]"
+ set x_crd "[expr $rand_r * sin($rand_phi) * cos($rand_theta)]"
+
+ return "$x_crd $y_crd $z_crd"
 }
 
 proc check_sel_collisions {{sel} {collider_sel_list {}} {colliderProc "check_mol_collision_sphere_box"}} {
@@ -245,6 +330,57 @@ proc check_sel_collisions {{sel} {collider_sel_list {}} {colliderProc "check_mol
 }
 
 proc sel_random_move {{sel} {bounding_minmax {{0 0 0} {0 0 0}}} {collider_sel_list {}} {colliderProc "check_mol_collision_sphere_box"} {rotate 1}} {
+ puts "bounding min_max: $bounding_minmax" 
+ puts "starting center: [measure center $sel]"
+
+ set new_center [rand_point_in_sphere $c $r]
+ puts "proposed new center: $new_center"
+
+ set move_vec [vecsub $new_center [measure center $sel]]
+ puts "-needed move vector: $move_vec"
+
+ draw delete all
+
+ draw_bounding_sphere $sel
+ draw_box_minmax $bounding_minmax
+ foreach csel $collider_sel_list {
+ 	draw_minmax $csel
+ }
+
+ $sel moveby $move_vec
+ while {[expr [check_sel_collisions $sel $collider_sel_list $colliderProc] > 0]} {
+	puts "--collision detected, trying new center--"
+	puts "current bad center: [measure minmax $sel]"
+ 	set new_center [rand_point_in_sphere $c $r]
+	puts "propsed new center: $new_center"
+	set move_vec [vecsub $new_center [measure center $sel]]
+	puts "-required move vector: $move_vec"
+	$sel moveby $move_vec
+    draw delete all
+	draw_box_minmax $bounding_minmax
+	draw_bounding_sphere $sel
+ 	foreach csel $collider_sel_list {
+ 		draw_minmax $csel
+ 	}
+ }
+
+ if {$rotate > 0} {
+	puts "computing new random orientation"
+	set current_center [measure center $sel]
+	set rotmat [transrand]
+	puts "rotation matrix: $rotmat"
+	$sel move $rotmat
+    set move_vec [vecsub $current_center [measure center $sel]]
+    $sel moveby $move_vec
+	draw delete all
+	draw_bounding_sphere $sel
+ 	foreach csel $collider_sel_list {
+ 		draw_minmax $csel
+ 	}
+ }
+}
+
+proc sel_random_sphere_move {{sel} {c {0 0 0}} {r {1}} {collider_sel_list {}} {colliderProc "check_mol_collision_sphere_sphere"} {rotate 1}} {
  puts "bounding min_max: $bounding_minmax" 
  puts "starting center: [measure center $sel]"
 
@@ -294,6 +430,7 @@ proc sel_random_move {{sel} {bounding_minmax {{0 0 0} {0 0 0}}} {collider_sel_li
  	}
  }
 }
+
 
 proc move_sel_into_system {{sel} {colliders_mol_id "top"} \
 	{colliders_sel_list {}} {colliderProc "check_mol_collision_sphere_box"} {rotate 1} \

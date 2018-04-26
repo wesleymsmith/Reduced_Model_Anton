@@ -1,0 +1,61 @@
+REMARK  99                                                                      
+REMARK  99 MOE v2016.08 (Chemical Computing Group Inc.) Wed Apr 25 18:03:47 2018
+HETATM    1  C8  LIG L   1      75.997  32.322 114.219  1.00  0.00           C  
+HETATM    2  S2  LIG L   1      75.580  30.638 114.219  1.00  0.00           S  
+HETATM    3  C9  LIG L   1      73.928  31.163 114.219  1.00  0.00           C  
+HETATM    4  C10 LIG L   1      72.816  30.220 114.219  1.00  0.00           C  
+HETATM    5  C11 LIG L   1      71.481  30.657 114.219  1.00  0.00           C  
+HETATM    6  N3  LIG L   1      70.457  29.792 114.219  1.00  0.00           N  
+HETATM    7  C12 LIG L   1      70.785  28.486 114.219  1.00  0.00           C  
+HETATM    8  C13 LIG L   1      72.112  28.052 114.219  1.00  0.00           C  
+HETATM    9  N4  LIG L   1      73.143  28.912 114.219  1.00  0.00           N  
+HETATM   10  N1  LIG L   1      73.769  32.477 114.219  1.00  0.00           N  
+HETATM   11  N2  LIG L   1      74.956  33.151 114.219  1.00  0.00           N  
+HETATM   12  S1  LIG L   1      77.674  32.822 114.219  1.00  0.00           S  
+HETATM   13  C7  LIG L   1      77.324  34.616 114.219  1.00  0.00           C  
+HETATM   14  C6  LIG L   1      78.474  35.602 114.219  1.00  0.00           C  
+HETATM   15  C1  LIG L   1      79.862  35.377 114.219  1.00  0.00           C  
+HETATM   16  CL1 LIG L   1      80.555  33.777 114.219  1.00  0.00           C  
+HETATM   17  C2  LIG L   1      80.790  36.423 114.219  1.00  0.00           C  
+HETATM   18  C3  LIG L   1      80.357  37.743 114.219  1.00  0.00           C  
+HETATM   19  C4  LIG L   1      78.993  38.019 114.219  1.00  0.00           C  
+HETATM   20  C5  LIG L   1      78.087  36.962 114.219  1.00  0.00           C  
+HETATM   21  CL2 LIG L   1      76.395  37.380 114.219  1.00  0.00           C  
+HETATM   22  H6  LIG L   1      71.247  31.719 114.219  1.00  0.00           H  
+HETATM   23  H7  LIG L   1      69.962  27.776 114.219  1.00  0.00           H  
+HETATM   24  H8  LIG L   1      72.360  26.993 114.219  1.00  0.00           H  
+HETATM   25  H4  LIG L   1      76.694  34.814 115.090  1.00  0.00           H  
+HETATM   26  H5  LIG L   1      76.694  34.814 113.348  1.00  0.00           H  
+HETATM   27  H1  LIG L   1      81.849  36.184 114.219  1.00  0.00           H  
+HETATM   28  H2  LIG L   1      81.080  38.554 114.219  1.00  0.00           H  
+HETATM   29  H3  LIG L   1      78.623  39.040 114.219  1.00  0.00           H  
+CONECT    1    2   11   11   12
+CONECT    2    1    3
+CONECT    3    2    4   10   10
+CONECT    4    3    5    9    9
+CONECT    5    4    6    6   22
+CONECT    6    5    5    7
+CONECT    7    6    8    8   23
+CONECT    8    7    7    9   24
+CONECT    9    4    4    8
+CONECT   10    3    3   11
+CONECT   11    1    1   10
+CONECT   12    1   13
+CONECT   13   12   14   25   26
+CONECT   14   13   15   20   20
+CONECT   15   14   16   17   17
+CONECT   16   15
+CONECT   17   15   15   18   27
+CONECT   18   17   19   19   28
+CONECT   19   18   18   20   29
+CONECT   20   14   14   19   21
+CONECT   21   20
+CONECT   22    5
+CONECT   23    7
+CONECT   24    8
+CONECT   25   13
+CONECT   26   13
+CONECT   27   17
+CONECT   28   18
+CONECT   29   19
+END
